@@ -23,6 +23,7 @@
 #include <sensor_msgs/Temperature.h>
 #include <sensor_msgs/FluidPressure.h>
 #include <geometry_msgs/Vector3.h>
+#include <mavros_msgs/Attitude.h>
 
 namespace mavros {
 namespace std_plugins {
@@ -90,6 +91,8 @@ public:
 		diff_press_pub = imu_nh.advertise<sensor_msgs::FluidPressure>("diff_pressure", 10);
 		imu_raw_pub = imu_nh.advertise<sensor_msgs::Imu>("data_raw", 10);
 
+		kari_att_pub = imu_nh.advertise<mavros_msgs::Attitude>("attitude", 10);
+
 		// Reset has_* flags on connection change
 		enable_connection_cb();
 	}
@@ -116,6 +119,8 @@ private:
 	ros::Publisher temp_baro_pub;
 	ros::Publisher static_press_pub;
 	ros::Publisher diff_press_pub;
+
+	ros::Publisher kari_att_pub;
 
 	bool has_hr_imu;
 	bool has_raw_imu;
@@ -280,8 +285,20 @@ private:
 	 */
 	void handle_attitude(const mavlink::mavlink_message_t *msg, mavlink::common::msg::ATTITUDE &att)
 	{
-		if (has_att_quat)
-			return;
+		// if (has_att_quat)
+		// 	return;
+
+		mavros_msgs::Attitude ros_att_msg;
+
+		ros_att_msg.roll = att.roll * RAD_TO_DEG;
+		ros_att_msg.pitch = att.pitch * RAD_TO_DEG;
+		ros_att_msg.yaw = att.yaw * RAD_TO_DEG;
+
+		ros_att_msg.rollspeed = att.rollspeed * RAD_TO_DEG;
+		ros_att_msg.pitchspeed = att.pitchspeed * RAD_TO_DEG;
+		ros_att_msg.yawspeed = att.yawspeed * RAD_TO_DEG;
+
+		kari_att_pub.publish(ros_att_msg);
 
 		/** Orientation on the NED-aicraft frame:
 		 *  @snippet src/plugins/imu.cpp ned_aircraft_orient1
