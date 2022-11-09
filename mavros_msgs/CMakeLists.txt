@@ -73,6 +73,7 @@ add_message_files(
   WaypointReached.msg
   WheelOdomStamped.msg
   Attitude.msg
+  GlobalPosition.msg
 )
 
 add_service_files(

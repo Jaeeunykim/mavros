@@ -32,6 +32,7 @@
 #include <geographic_msgs/GeoPointStamped.h>
 
 #include <mavros_msgs/HomePosition.h>
+#include <mavros_msgs/GlobalPosition.h>
 
 namespace mavros {
 namespace std_plugins {
@@ -72,6 +73,8 @@ public:
 
 		UAS_DIAG(m_uas).add("GPS", this, &GlobalPositionPlugin::gps_diag_run);
 
+		//kari 
+		kari_global_pub = gp_nh.advertise<mavros_msgs::GlobalPosition>("globalPosition", 10);
 		// gps data
 		raw_fix_pub = gp_nh.advertise<sensor_msgs::NavSatFix>("raw/fix", 10);
 		raw_vel_pub = gp_nh.advertise<geometry_msgs::TwistStamped>("raw/gps_vel", 10);
@@ -118,6 +121,8 @@ private:
 	ros::Publisher gp_rel_alt_pub;
 	ros::Publisher gp_global_origin_pub;
 	ros::Publisher gp_global_offset_pub;
+
+	ros::Publisher kari_global_pub;
 
 	ros::Subscriber gp_set_global_origin_sub;
 	ros::Subscriber hp_sub;
@@ -253,6 +258,7 @@ private:
 
 	void handle_global_position_int(const mavlink::mavlink_message_t *msg, mavlink::common::msg::GLOBAL_POSITION_INT &gpos)
 	{
+
 		auto odom = boost::make_shared<nav_msgs::Odometry>();
 		auto fix = boost::make_shared<sensor_msgs::NavSatFix>();
 		auto relative_alt = boost::make_shared<std_msgs::Float64>();
@@ -379,6 +385,17 @@ private:
 		gp_odom_pub.publish(odom);
 		gp_rel_alt_pub.publish(relative_alt);
 		gp_hdg_pub.publish(compass_heading);
+
+
+		mavros_msgs::GlobalPosition ros_global_msg;
+		ros_global_msg.lat_deg = fix->latitude;
+		ros_global_msg.lon_deg = fix->longitude;
+		ros_global_msg.h_mtr = fix->altitude;
+		ros_global_msg.nvel_mps = gpos.vx;
+		ros_global_msg.nvel_mps = gpos.vy;
+		ros_global_msg.nvel_mps = gpos.vz;
+
+		kari_global_pub.publish(ros_global_msg);
 
 		// TF
 		if (tf_send) {
