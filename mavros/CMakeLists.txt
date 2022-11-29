@@ -58,6 +58,8 @@ find_package(std_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
 find_package(trajectory_msgs REQUIRED)
 
+find_package(kari_interfaces REQUIRED)
+
 include_directories(
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>
@@ -178,6 +180,7 @@ ament_target_dependencies(mavros_plugins
   tf2_eigen
   message_filters
   Eigen3
+  kari_interfaces
 )
 pluginlib_export_plugin_description_file(mavros mavros_plugins.xml)
 

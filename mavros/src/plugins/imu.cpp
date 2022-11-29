@@ -29,6 +29,7 @@
 #include "sensor_msgs/msg/temperature.hpp"
 #include "sensor_msgs/msg/fluid_pressure.hpp"
 #include "geometry_msgs/msg/vector3.hpp"
+#include "kari_interfaces/msg/attitude.hpp"
 
 namespace mavros
 {
@@ -125,6 +126,8 @@ public:
       "~/diff_pressure",
       sensor_qos);
 
+    kari_att_pub = node->create_publisher<kari_interfaces::msg::Attitude>("~/attitude", sensor_qos);
+
     // Reset has_* flags on connection change
     enable_connection_cb();
   }
@@ -151,6 +154,8 @@ private:
   rclcpp::Publisher<sensor_msgs::msg::Temperature>::SharedPtr temp_baro_pub;
   rclcpp::Publisher<sensor_msgs::msg::FluidPressure>::SharedPtr static_press_pub;
   rclcpp::Publisher<sensor_msgs::msg::FluidPressure>::SharedPtr diff_press_pub;
+
+  rclcpp::Publisher<kari_interfaces::msg::Attitude>::SharedPtr kari_att_pub;
 
   std::atomic<bool> has_hr_imu;
   std::atomic<bool> has_raw_imu;
@@ -323,6 +328,21 @@ private:
     if (has_att_quat) {
       return;
     }
+
+    // kari_interfaces::msg::Attitude ros_att_msg;
+
+    auto ros_att_msg = kari_interfaces::msg::Attitude();
+
+		ros_att_msg.roll = att.roll * RAD_TO_DEG;
+		ros_att_msg.pitch = att.pitch * RAD_TO_DEG;
+		ros_att_msg.yaw = att.yaw * RAD_TO_DEG;
+
+		ros_att_msg.rollspeed = att.rollspeed * RAD_TO_DEG;
+		ros_att_msg.pitchspeed = att.pitchspeed * RAD_TO_DEG;
+		ros_att_msg.yawspeed = att.yawspeed * RAD_TO_DEG;
+
+    kari_att_pub->publish(ros_att_msg);
+
 
     /** Orientation on the NED-aicraft frame:
      *  @snippet src/plugins/imu.cpp ned_aircraft_orient1
