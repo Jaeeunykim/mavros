@@ -38,6 +38,9 @@
 #include "geographic_msgs/msg/geo_point_stamped.hpp"
 #include "mavros_msgs/msg/home_position.hpp"
 
+#include <mavros_msgs/GlobalPosition.h>
+
+
 namespace mavros
 {
 namespace std_plugins
@@ -131,6 +134,10 @@ public:
       "~/set_gp_origin", sensor_qos,
       std::bind(&GlobalPositionPlugin::set_gp_origin_cb, this, _1));
 
+    // Kari
+    kari_global_pub = node->create_publisher<mavros_msgs::msg::HomePosition>("~/globalPosition", sensor_qos);
+
+
     // home position subscriber to set "map" origin
     // TODO(vooon): use UAS
     hp_sub = node->create_subscription<mavros_msgs::msg::HomePosition>(
@@ -165,6 +172,9 @@ private:
   rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr gp_hdg_pub;
   rclcpp::Publisher<geographic_msgs::msg::GeoPointStamped>::SharedPtr gp_global_origin_pub;
   rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr gp_global_offset_pub;
+
+  rclcpp::Publisher<mavros_msgs::msg::GlobalPosition>::SharedPtr kari_global_pub;
+
 
   rclcpp::Subscription<geographic_msgs::msg::GeoPointStamped>::SharedPtr gp_set_global_origin_sub;
   rclcpp::Subscription<mavros_msgs::msg::HomePosition>::SharedPtr hp_sub;
@@ -435,6 +445,19 @@ private:
     gp_odom_pub->publish(odom);
     gp_rel_alt_pub->publish(relative_alt);
     gp_hdg_pub->publish(compass_heading);
+
+		mavros_msgs::msg::GlobalPosition ros_global_msg;
+
+    auto ros_global_msg = mavros_msgs::msg::GlobalPosition();
+		ros_global_msg.lat_deg = fix.latitude;
+		ros_global_msg.lon_deg = fix.longitude;
+		ros_global_msg.h_mtr = fix.altitude;
+		ros_global_msg.nvel_mps = gpos.vx;
+		ros_global_msg.nvel_mps = gpos.vy;
+		ros_global_msg.nvel_mps = gpos.vz;
+
+		kari_global_pub.publish(ros_global_msg);
+
 
     // TF
     if (tf_send) {
